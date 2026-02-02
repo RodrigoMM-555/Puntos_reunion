@@ -24,6 +24,7 @@
         box-shadow: 2px 0 6px rgba(0,0,0,0.05);
         height: 100%;
         position: sticky;
+        top: 20px;
     }
 
     section#derecha {
@@ -49,6 +50,23 @@
         background-color: #4338ca;
     }
 
+    button.eliminar {
+        width: 100%;
+        padding: 10px;
+        margin-bottom: 10px;
+        font-size: 14px;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        background-color: #e54646;
+        color: white;
+        transition: background-color 0.2s ease;
+    }
+
+    button.eliminar:hover {
+        background-color: #ca3838;
+    }
+
     /* Botón guardar un poco diferente */
     .acciones button:last-child {
         background-color: #16a34a;
@@ -62,6 +80,24 @@
     #contenedor {
         max-width: 800px;
         margin: 0 auto;
+    }
+
+    textarea.editor {
+        width: 100%;                /* Siempre ocupa todo el ancho */
+        max-width: 100%;            /* No se salga del contenedor */
+        box-sizing: border-box;     /* Incluye padding en el ancho */
+        min-height: 80px;
+        padding: 8px;
+        border-radius: 5px;
+        border: 1px solid #ccc;
+        resize: vertical;           /* Solo se puede cambiar altura */
+        min-height: 250px;
+    }
+
+    /* Efecto al hacer foco */
+    textarea.editor:focus {
+        outline: none;
+        border-color: #4f46e5;
     }
 
     /* ====== CADA PUNTO ====== */
@@ -80,12 +116,30 @@
         border-radius: 5px;
         cursor: grab;
         margin-bottom: 10px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
     }
 
     .handle h2 {
         margin: 0;
         font-size: 16px;
         color: #111827;
+    }
+
+    .handle select {
+        padding: 5px 8px;          /* Espaciado interno */
+        border-radius: 5px;         /* Bordes redondeados */
+        border: 1px solid #ccc;     /* Borde gris claro */
+        font-size: 13px;
+        background-color: #f9f9f9;  /* Fondo suave */
+        cursor: pointer;
+    }
+
+    /* Pequeño efecto al enfocar */
+    .handle select:focus {
+        outline: none;
+        border-color: #4f46e5;      /* Borde azul */
     }
 
     .handle:active {
@@ -150,13 +204,22 @@
         seccion.className = "punto";
 
         seccion.innerHTML = `
-            <div class="handle"><h2>☰ ${titulo}</h2></div>
+            <div class="handle">
+                <h2>☰ ${titulo}</h2>
+                <form>
+                    <select>
+                        <option value="Cno">Comite no</option>
+                        <option value="Csi">Comite si</option>
+                    </select>
+                </form>
+            </div>
             <p class="contenido">Contenido del punto...</p>
 
             <textarea class="editor" style="display:none;"></textarea>
 
             <div class="acciones">
                 <button onclick="editar(this)">Editar</button>
+                <button onclick="this.closest('.punto').remove();" class="eliminar">Eliminar</button>
                 <button onclick="guardar(this)" style="display:none;">Guardar</button>
             </div>
         `;
@@ -176,6 +239,7 @@
 
         // Ocultamos botón editar y mostramos guardar
         boton.style.display = "none";
+        boton.nextElementSibling.style.display = "none";    // Ocultamos eliminar
         BotonGuardar.style.display = "inline";
     }
 
@@ -194,6 +258,7 @@
 
         // Mostramos editar y ocultamos guardar
         boton.style.display = "none";
+        boton.previousElementSibling.style.display = "inline";  // Mostramos eliminar
         BotonEditar.style.display = "inline";
     }
 
@@ -203,4 +268,81 @@
     });
 
 </script>
+
+<!-- Imprimir -->
+<!-- AÑADE ESTE SCRIPT AL FINAL DE TU BODY O ANTES DE </body> -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script>
+function imprimir() {
+    // Pedimos al usuario que escriba el título del PDF
+    const tituloPDF = prompt("Introduce el título del PDF:");
+    
+    // Si no escribe nada o pulsa cancelar, salimos de la función
+    if (!tituloPDF) return;
+
+    // Inicializamos jsPDF
+    // jsPDF nos permite crear documentos PDF directamente desde JS
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+
+    // Variable "y" para controlar la posición vertical en el PDF
+    let y = 20; // comenzamos a 20 unidades desde arriba
+
+    // Escribimos el título principal del PDF centrado
+    doc.setFontSize(18); // tamaño de letra grande
+    doc.text(tituloPDF, 105, y, { align: "center" }); // 105 = centro horizontal A4
+    y += 15; // dejamos espacio después del título
+
+    // Seleccionamos todos los puntos en orden del contenedor
+    const puntos = document.querySelectorAll(".punto");
+    doc.setFontSize(12); // tamaño de letra normal para los puntos
+
+    // Recorremos cada punto
+    puntos.forEach((punto, index) => {
+
+        // Obtenemos el título del punto (quitando el icono ☰)
+        const titulo = punto.querySelector(".handle h2").innerText.replace("☰ ", "");
+
+        // Obtenemos el valor del select del punto
+        const select = punto.querySelector(".handle select");
+        const valor = select ? select.value : "Cno"; // si no hay select, asumimos "Cno"
+
+        // Cambiamos el color del título según comité
+        if (valor === "Csi") {
+            doc.setTextColor(0, 128, 0); // verde para "Comité si"
+        } else {
+            doc.setTextColor(255, 0, 0); // rojo para "Comité no"
+        }
+
+        // Escribimos el título del punto en el PDF
+        doc.text(`${index + 1}. ${titulo}`, 20, y); // 20 = margen izquierdo
+        y += 7; // dejamos un pequeño espacio después del título
+
+        // Obtenemos el contenido del punto
+        const contenido = punto.querySelector(".contenido").innerText;
+
+        // Ponemos el color negro para el contenido
+        doc.setTextColor(0, 0, 0);
+
+        // Ajustamos el texto a un ancho máximo de 170 unidades
+        // splitTextToSize divide el texto en varias líneas si es demasiado largo
+        const lines = doc.splitTextToSize(contenido, 170);
+
+        // Escribimos cada línea del contenido en el PDF
+        doc.text(lines, 25, y); // 25 = margen izquierdo para el contenido
+        y += lines.length * 7 + 5; // avanzamos la posición vertical según el número de líneas
+
+        // Si nos acercamos al final de la página (aprox 280 unidades),
+        // añadimos una nueva página y reiniciamos "y"
+        if (y > 280) {
+            doc.addPage();
+            y = 20;
+        }
+    });
+
+    // Guardamos y descargamos el PDF con el nombre que escribió el usuario
+    doc.save(`${tituloPDF}.pdf`);
+}
+</script>
+
 </html>
