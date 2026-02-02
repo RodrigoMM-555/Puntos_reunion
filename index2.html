@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PuntosReu</title>
+<style>
+    /* ====== ESTILO GENERAL ====== */
+    body {
+        font-family: "Segoe UI", Arial, sans-serif;
+        margin: 0;
+        padding: 20px;
+        display: flex;
+        background-color: #f4f6f8;
+        color: #333;
+    }
+
+    /* ====== COLUMNAS ====== */
+    section#izquierda {
+        width: 25%;
+        padding: 20px;
+        background-color: #ffffff;
+        border-right: 1px solid #ddd;
+        box-shadow: 2px 0 6px rgba(0,0,0,0.05);
+        height: 100%;
+        position: sticky;
+    }
+
+    section#derecha {
+        width: 75%;
+        padding: 20px;
+    }
+
+    /* ====== BOTONES ====== */
+    button {
+        width: 100%;
+        padding: 10px;
+        margin-bottom: 10px;
+        font-size: 14px;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        background-color: #4f46e5;
+        color: white;
+        transition: background-color 0.2s ease;
+    }
+
+    button:hover {
+        background-color: #4338ca;
+    }
+
+    /* Botón guardar un poco diferente */
+    .acciones button:last-child {
+        background-color: #16a34a;
+    }
+
+    .acciones button:last-child:hover {
+        background-color: #15803d;
+    }
+
+    /* ====== CONTENEDOR DE PUNTOS ====== */
+    #contenedor {
+        max-width: 800px;
+        margin: 0 auto;
+    }
+
+    /* ====== CADA PUNTO ====== */
+    .punto {
+        background-color: #ffffff;
+        border-radius: 8px;
+        margin-bottom: 15px;
+        padding: 15px;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.06);
+    }
+
+    /* ====== CABECERA / DRAG ====== */
+    .handle {
+        background-color: #e5e7eb;
+        padding: 8px 10px;
+        border-radius: 5px;
+        cursor: grab;
+        margin-bottom: 10px;
+    }
+
+    .handle h2 {
+        margin: 0;
+        font-size: 16px;
+        color: #111827;
+    }
+
+    .handle:active {
+        cursor: grabbing;
+    }
+
+    /* ====== CONTENIDO ====== */
+    .contenido {
+        font-size: 14px;
+        line-height: 1.5;
+        margin-bottom: 10px;
+    }
+
+    /* ====== TEXTAREA EDICIÓN ====== */
+    textarea {
+        width: 100%;
+        min-height: 80px;
+        padding: 8px;
+        font-family: inherit;
+        font-size: 14px;
+        border-radius: 5px;
+        border: 1px solid #ccc;
+        resize: vertical;
+        margin-bottom: 10px;
+    }
+
+    textarea:focus {
+        outline: none;
+        border-color: #4f46e5;
+    }
+
+    /* ====== BOTONES DE ACCIÓN ====== */
+    .acciones {
+        display: flex;
+        gap: 10px;
+    }
+
+    .acciones button {
+        width: auto;
+        flex: 1;
+    }
+</style>
+</head>
+<body>
+    <section id="izquierda">
+        <button onclick="crearSeccion()">Crear punto</button>
+        <button onclick="imprimir()">Imprimir</button>
+    </section>
+    <section id="derecha">
+        <div id="contenedor"></div>
+        <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+    </section>
+</body>
+<script>
+    // Funcion para crear el punto
+    function crearSeccion(){
+        const titulo = prompt("Titulo del punto:");
+
+        if (titulo === null || titulo.trim() === "") return;
+        const seccion = document.createElement("section");
+
+        seccion.className = "punto";
+
+        seccion.innerHTML = `
+            <div class="handle"><h2>☰ ${titulo}</h2></div>
+            <p class="contenido">Contenido del punto...</p>
+
+            <textarea class="editor" style="display:none;"></textarea>
+
+            <div class="acciones">
+                <button onclick="editar(this)">Editar</button>
+                <button onclick="guardar(this)" style="display:none;">Guardar</button>
+            </div>
+        `;
+
+        document.getElementById("contenedor").appendChild(seccion);
+    }
+    // Funcion para editar el punto
+    function editar(boton){
+        const seccion = boton.closest(".punto");
+        const contenido = seccion.querySelector(".contenido");
+        const editor = seccion.querySelector(".editor");    // Area de texto a editar
+        const BotonGuardar = seccion.querySelector("button[onclick='guardar(this)']"); // Boton guardar
+
+        // Ocultamos el texto y mostramos el textarea
+        contenido.style.display = "none";
+        editor.style.display = "block";
+
+        // Ocultamos botón editar y mostramos guardar
+        boton.style.display = "none";
+        BotonGuardar.style.display = "inline";
+    }
+
+    // Funcion para guardar el punto
+    function guardar(boton){
+        const seccion = boton.closest(".punto");
+        const contenido = seccion.querySelector(".contenido");
+        const editor = seccion.querySelector(".editor");    // Area de texto editada
+        const BotonEditar = seccion.querySelector("button[onclick='editar(this)']");
+
+        contenido.innerText = editor.value;
+
+        // Volvemos a mostrar el texto y ocultar el textarea
+        editor.style.display = "none";
+        contenido.style.display = "block";
+
+        // Mostramos editar y ocultamos guardar
+        boton.style.display = "none";
+        BotonEditar.style.display = "inline";
+    }
+
+    new Sortable(contenedor, {
+        animation: 150,      // animación al mover
+        handle: ".handle"    // zona desde donde se arrastra
+    });
+
+</script>
+</html>
