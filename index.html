@@ -15,16 +15,32 @@
         color: #333;
     }
 
+    footer button {
+        position: fixed;   /* Fijo respecto a la ventana */
+        bottom: 20px;      /* Separación desde abajo */
+        right: 20px;        /* Separación desde la izquierda */
+        z-index: 1000;     /* Para que quede por encima */
+        max-width: 100px;
+    }
+
     /* ====== COLUMNAS ====== */
     section#izquierda {
         width: 25%;
+    }
+
+    #izquierda article {
         padding: 20px;
         background-color: #ffffff;
         border-right: 1px solid #ddd;
         box-shadow: 2px 0 6px rgba(0,0,0,0.05);
-        height: 100%;
         position: sticky;
         top: 20px;
+        margin-bottom: 30px;
+    }
+
+    #izquierda article.encuesta{
+        top: 190px;
+        padding-top: 1px;
     }
 
     section#derecha {
@@ -181,18 +197,77 @@
         width: auto;
         flex: 1;
     }
+
+    /* Encuesta */
+    .barra {
+        margin-bottom: 20px;
+        height: 24px; /* un poco más alto para texto */
+        transition: 0.5s;
+        background: #25d366;
+        border-radius: 5px;
+        width: 0%;
+        position: relative; /* necesario para posicionar el texto */
+        color: #137035;
+        font-weight: bold;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 10px;
+    }
+
+    .barra .votos {
+        position: absolute;
+        width: 100%;
+        text-align: center;
+    }
+
+    .encuesta button {
+        display: flex;
+        justify-content: space-between;
+    }
+
 </style>
 </head>
 <body>
     <section id="izquierda">
-        <button onclick="crearSeccion()">Crear punto</button>
-        <button onclick="imprimir()">Imprimir</button>
+        <article>
+            <button onclick="crearSeccion()">Crear punto</button>
+            <button onclick="imprimir()">Imprimir</button>
+        </article>
+        <article class="encuesta">
+                <h3>Asistencia</h3>
+            
+                <div class="opcion">
+                    <button onclick="votar(0)">Voy<span class="votos">0 votos</span></button>
+                    <div class="barra" id="barra0">
+                        <span class="votos"></span>
+                    </div>
+                </div>
+            
+                <div class="opcion">
+                    <button onclick="votar(1)">No voy<span class="votos">0 votos</span></button>
+                    <div class="barra" id="barra1">
+                        <span class="votos"></span>
+                    </div>
+                </div>
+            
+                <div class="opcion">
+                    <button onclick="votar(2)">Llego tarde<span class="votos">0 votos</span></button>
+                    <div class="barra" id="barra2">
+                        <span class="votos"></span>
+                    </div>
+                </div>
+        </article>
+        
     </section>
     <section id="derecha">
         <div id="contenedor"></div>
         <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
     </section>
 </body>
+<footer>
+    <button onclick="eliminarTodos()"> Eliminar todos </button>
+</footer>
 <script>
     // Funcion para crear el punto
     function crearSeccion(){
@@ -267,6 +342,33 @@
         handle: ".handle"    // zona desde donde se arrastra
     });
 
+    function eliminarTodos() {
+    if (confirm("¿Seguro que quieres eliminar todos los puntos?")) {
+        document.getElementById("contenedor").innerHTML = "";
+    }
+    }
+
+    // Encuesta
+    let votos = [0, 0, 0];
+    function votar(opcion) {
+        votos[opcion]++;
+
+        let total = votos.reduce((a, b) => a + b, 0);
+
+        votos.forEach((voto, i) => {
+            let porcentaje = (voto / total) * 100;
+
+            const barra = document.getElementById("barra" + i);
+            barra.style.width = porcentaje + "%";
+
+            // 🔹 buscamos el texto DENTRO del botón
+            const boton = barra.previousElementSibling;
+            const texto = boton.querySelector(".votos");
+
+            texto.innerText = `${voto} votos `;
+            barra.querySelector(".votos").innerText = `${Math.round(porcentaje)}%`;
+        });
+    }
 </script>
 
 <!-- Imprimir -->
